@@ -1,0 +1,23 @@
+{
+  "name": "org-os-notion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OrgOS Notion Track - AI-Native Enterprise OS focusing on Employee Onboarding",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "setup:notion": "node scripts/setup-notion.js",
+    "dev:client": "npm run dev -w client",
+    "dev:server": "npm run dev -w server",
+    "build:client": "npm run build -w client",
+    "build:server": "npm run build -w server",
+    "start:server": "npm run start -w server",
+    "test:server": "npm run test -w server"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^16.4.5"
+  }
+}
