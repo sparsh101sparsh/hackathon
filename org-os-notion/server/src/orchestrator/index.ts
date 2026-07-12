@@ -208,7 +208,7 @@ async function runOrchestrator(sessionId: string): Promise<void> {
 
   if (session.state === 'ENGINEERING_SETUP') {
     await logStep(sessionId, 'Engineering', 'Engineering Agent initialized.', 'Initializing engineering onboarding tasks...', 0);
-    await logStep(sessionId, 'Engineering', 'Checking GitHub username...', '✓ Verified GitHub username\nWaiting for organization invitation...', 0);
+    await logStep(sessionId, 'Engineering', 'Checking GitHub username...', 'Verified GitHub username\nWaiting for organization invitation...', 0);
 
     let userId: number;
     try {
@@ -222,8 +222,8 @@ async function runOrchestrator(sessionId: string): Promise<void> {
       return;
     }
 
-    await logStep(sessionId, 'Engineering', '✓ Username exists.', `✓ Verified GitHub username (User ID: ${userId})\nWaiting for organization invitation...`, 0);
-    await logStep(sessionId, 'Engineering', 'Preparing organization invitation...', '✓ Verified GitHub username\n✓ Sent organization invitation\nWaiting for onboarding issue...', 0);
+    await logStep(sessionId, 'Engineering', 'Username exists.', `Verified GitHub username (User ID: ${userId})\nWaiting for organization invitation...`, 0);
+    await logStep(sessionId, 'Engineering', 'Preparing organization invitation...', 'Verified GitHub username\nSent organization invitation\nWaiting for onboarding issue...', 0);
 
     let inviteOk = false;
     try {
@@ -233,9 +233,9 @@ async function runOrchestrator(sessionId: string): Promise<void> {
       await logStep(sessionId, 'Engineering', `⚠️ Org invitation failed: ${err.message}`, err.message || 'Invitation failed', 0);
     }
     if (inviteOk) {
-      await logStep(sessionId, 'Engineering', '🐙 ✓ Invitation sent.', '✓ Verified GitHub username\n✓ Sent organization invitation\nWaiting for onboarding issue...', 0);
+      await logStep(sessionId, 'Engineering', 'Invitation sent.', 'Verified GitHub username\nSent organization invitation\nWaiting for onboarding issue...', 0);
     }
-    await logStep(sessionId, 'Engineering', 'Creating onboarding issue...', '✓ Verified GitHub username\n✓ Sent organization invitation\n✓ Created onboarding issue\nWaiting for calendar event...', 0);
+    await logStep(sessionId, 'Engineering', 'Creating onboarding issue...', 'Verified GitHub username\nSent organization invitation\nCreated onboarding issue\nWaiting for calendar event...', 0);
 
     let issueNum: number | null = null;
     let issueError: any = null;
@@ -254,24 +254,24 @@ async function runOrchestrator(sessionId: string): Promise<void> {
     }
 
     if (issueNum !== null) {
-      await logStep(sessionId, 'Engineering', `✓ Issue #${issueNum} created.`, `✓ Verified GitHub username\n✓ Sent organization invitation\n✓ Created onboarding issue #${issueNum}\nWaiting for calendar event...`, 0);
+      await logStep(sessionId, 'Engineering', `Issue #${issueNum} created.`, `Verified GitHub username\nSent organization invitation\nCreated onboarding issue #${issueNum}\nWaiting for calendar event...`, 0);
     } else {
       await logStep(sessionId, 'Engineering', 'Issue creation failed', issueError?.message || 'Failed to create onboarding issue after retry', 0);
     }
 
     // ── Google Calendar step ──────────────────────────────────────────
-    await logStep(sessionId, 'Engineering', '📅 Scheduling Google Calendar orientation...', '✓ Verified GitHub username\n✓ Sent organization invitation\n✓ Created onboarding issue\n✓ Created Google Calendar event\nWaiting for welcome email...', 0);
+    await logStep(sessionId, 'Engineering', 'Scheduling Google Calendar orientation...', 'Verified GitHub username\nSent organization invitation\nCreated onboarding issue\nCreated Google Calendar event\nWaiting for welcome email...', 0);
     try {
       const calResult = await googleService.createOrientationEvent(session.record.employeeName, session.record.email);
       session.record.calendarEventUrl = calResult.eventUrl ?? undefined;
       session.record.calendarEventDate = calResult.startTime ?? undefined;
-      await logStep(sessionId, 'Engineering', `📅 Orientation scheduled: ${calResult.startTime}`, `✓ Verified GitHub username\n✓ Sent organization invitation\n✓ Created onboarding issue\n✓ Created Google Calendar event\n✓ Generated meeting link\nWaiting for welcome email...`, 0);
+      await logStep(sessionId, 'Engineering', `Orientation scheduled: ${calResult.startTime}`, `Verified GitHub username\nSent organization invitation\nCreated onboarding issue\nCreated Google Calendar event\nGenerated meeting link\nWaiting for welcome email...`, 0);
     } catch (err: any) {
-      await logStep(sessionId, 'Engineering', `📅 Calendar scheduling failed: ${err.message}`, err.message, 0);
+      await logStep(sessionId, 'Engineering', `Calendar scheduling failed: ${err.message}`, err.message, 0);
     }
 
     // ── Gmail step ───────────────────────────────────────────────────
-    await logStep(sessionId, 'Engineering', '📧 Sending welcome email...', '✓ Verified GitHub username\n✓ Sent organization invitation\n✓ Created onboarding issue\n✓ Created Google Calendar event\n✓ Generated meeting link\n✓ Sent welcome email\nWaiting for Notion sync...', 0);
+    await logStep(sessionId, 'Engineering', 'Sending welcome email...', 'Verified GitHub username\nSent organization invitation\nCreated onboarding issue\nCreated Google Calendar event\nGenerated meeting link\nSent welcome email\nWaiting for Notion sync...', 0);
     try {
       const issueUrl = issueNum
         ? `https://github.com/${process.env.GITHUB_ORG}/${process.env.GITHUB_REPO}/issues/${issueNum}`
@@ -286,9 +286,9 @@ async function runOrchestrator(sessionId: string): Promise<void> {
         issueUrl
       );
       session.record.emailSent = true;
-      await logStep(sessionId, 'Engineering', '📧 Welcome email delivered.', '✓ Verified GitHub username\n✓ Sent organization invitation\n✓ Created onboarding issue\n✓ Created Google Calendar event\n✓ Generated meeting link\n✓ Sent welcome email\nWaiting for Notion sync...', 0);
+      await logStep(sessionId, 'Engineering', 'Welcome email delivered.', 'Verified GitHub username\nSent organization invitation\nCreated onboarding issue\nCreated Google Calendar event\nGenerated meeting link\nSent welcome email\nWaiting for Notion sync...', 0);
     } catch (err: any) {
-      await logStep(sessionId, 'Engineering', `📧 Email failed: ${err.message}`, err.message, 0);
+      await logStep(sessionId, 'Engineering', `Email failed: ${err.message}`, err.message, 0);
     }
 
     await logStep(sessionId, 'Engineering', 'Updating Notion...', 'Saving GitHub setup results to Notion database...', 0);
@@ -319,7 +319,7 @@ async function runOrchestrator(sessionId: string): Promise<void> {
       }
     });
 
-    await logStep(sessionId, 'Engineering', '✓ Organizational memory updated.', '✓ Verified GitHub username\n✓ Sent organization invitation\n✓ Created onboarding issue\n✓ Created Google Calendar event\n✓ Generated meeting link\n✓ Sent welcome email\n✓ Updated Notion', 0);
+    await logStep(sessionId, 'Engineering', 'Organizational memory updated.', 'Verified GitHub username\nSent organization invitation\nCreated onboarding issue\nCreated Google Calendar event\nGenerated meeting link\nSent welcome email\nUpdated Notion', 0);
 
     const summaryPrompt = `Onboarding engineering setup for ${session.record.employeeName} (GitHub: ${session.record.githubUsername}) completed.
 Summary of actions:

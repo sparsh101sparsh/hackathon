@@ -120,14 +120,14 @@ export const googleService = {
 <head><meta charset="utf-8"></head>
 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 32px; border-radius: 12px 12px 0 0; text-align: center;">
-    <h1 style="color: white; margin: 0;">Welcome to OrgOS 🎉</h1>
+    <h1 style="color: white; margin: 0;">Welcome to OrgOS</h1>
   </div>
   <div style="background: #f9fafb; padding: 32px; border-radius: 0 0 12px 12px;">
     <p>Hi <strong>${employeeName}</strong>,</p>
     <p>We're thrilled to have you on board! Your onboarding has been set up and is ready to go.</p>
     
     <div style="background: white; border-left: 4px solid #6366f1; padding: 16px; margin: 24px 0; border-radius: 0 8px 8px 0;">
-      <h3 style="margin: 0 0 12px;">📅 Orientation Session Scheduled</h3>
+      <h3 style="margin: 0 0 12px;">Orientation Session Scheduled</h3>
       <p style="margin: 0;"><a href="${eventUrl}" style="color: #6366f1; font-weight: bold;">Open Calendar Event →</a></p>
     </div>
 

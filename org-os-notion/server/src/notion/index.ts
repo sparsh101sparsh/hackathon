@@ -76,7 +76,7 @@ export function validateAuditLog(data: any): data is AuditLog {
 
 export function validateOnboardingRecord(data: any): data is OnboardingRecord {
   if (typeof data !== 'object' || data === null) throw new Error('Invalid OnboardingRecord: must be an object');
-  const allowedKeys = new Set(['id', 'employeeName', 'role', 'department', 'salary', 'equipmentList', 'githubUsername', 'onboardingStatus']);
+  const allowedKeys = new Set(['id', 'employeeName', 'role', 'department', 'salary', 'equipmentList', 'githubUsername', 'onboardingStatus', 'email', 'companyBudget', 'calendarEventUrl', 'calendarEventDate', 'emailSent']);
   for (const key of Object.keys(data)) {
     if (!allowedKeys.has(key)) throw new Error(`Invalid property in OnboardingRecord: ${key}`);
   }
@@ -201,6 +201,14 @@ function dateStart(property: any): string {
 
 function numberValue(property: any): number {
   return typeof property?.number === 'number' ? property.number : 0;
+}
+
+function emailValue(property: any): string | undefined {
+  return property?.email || undefined;
+}
+
+function urlValue(property: any): string | undefined {
+  return property?.url || undefined;
 }
 
 function decisionAgent(value: string): Decision['agent'] {
@@ -393,6 +401,12 @@ export async function createOnboardingRecord(data: OnboardingRecord): Promise<On
         "GitHub Username": {
           rich_text: [{ text: { content: data.githubUsername } }]
         },
+        "Email": {
+          email: data.email || null
+        },
+        "Calendar Event": {
+          url: data.calendarEventUrl || null
+        },
         "Onboarding Status": {
           select: { name: data.onboardingStatus }
         }
@@ -495,6 +509,8 @@ export async function getNotionData() {
           salary: numberValue(properties['Salary']),
           equipmentList: richText(properties['Equipment List']),
           githubUsername: richText(properties['GitHub Username']),
+          email: emailValue(properties['Email']),
+          calendarEventUrl: urlValue(properties['Calendar Event']),
           onboardingStatus: onboardingStatus(selectName(properties['Onboarding Status']))
         };
       })

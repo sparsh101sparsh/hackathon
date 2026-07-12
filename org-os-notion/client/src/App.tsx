@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   UserRound,
   X,
+  Bot,
   type LucideIcon,
 } from 'lucide-react';
 import './index.css';
@@ -111,9 +112,9 @@ function getStepStatus(stepKey: string, currentState: string): 'completed' | 'ac
   return 'idle';
 }
 
-function IconBox({ Icon, tone = 'neutral' }: { Icon: LucideIcon; tone?: 'purple' | 'blue' | 'green' | 'orange' | 'red' | 'neutral' }) {
+function IconBox({ Icon }: { Icon: LucideIcon; tone?: 'purple' | 'blue' | 'green' | 'orange' | 'red' | 'neutral' }) {
   return (
-    <div className={`card-icon ${tone}`}>
+    <div className="card-icon">
       <Icon size={18} strokeWidth={2.2} />
     </div>
   );
@@ -210,12 +211,14 @@ export default function App() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [activeSessions, setActiveSessions] = useState<any[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<'calendar' | 'mails' | 'employeeList' | 'employeeData' | null>(null);
   
   const [equipmentOptions, setEquipmentOptions] = useState<string[]>(['MacBook Pro', '27" Monitor', 'Keyboard', 'Mouse']);
   const [customEquipment, setCustomEquipment] = useState('');
   const [isAddingCustom, setIsAddingCustom] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const memorySectionRef = useRef<HTMLDivElement>(null);
 
   const selectedEquipment = formData.equipment ? formData.equipment.split(',').map(s => s.trim()).filter(Boolean) : [];
 
@@ -371,12 +374,109 @@ export default function App() {
   const totalCost = notionAuditLogs.reduce((sum, l) => sum + (l.cost || 0), 0);
   const agentCards = buildAgentCards(sessionState);
   const pendingApprovalCount = approvals.length;
-  const pendingInvitesCount = notionAuditLogs.filter(l => l.actionExecuted && l.actionExecuted.includes("✓ Invitation sent.")).length;
-  const issuesCreatedCount = notionAuditLogs.filter(l => l.actionExecuted && /✓ Issue #/.test(l.actionExecuted)).length;
+  const pendingInvitesCount = notionAuditLogs.filter(l => l.actionExecuted && l.actionExecuted.includes("Invitation sent.")).length;
+  const issuesCreatedCount = notionAuditLogs.filter(l => l.actionExecuted && /Issue #/.test(l.actionExecuted)).length;
   const notionPageCount = notionDecisions.length + notionAuditLogs.length + notionOnboardingRecords.length;
-  const calendarEventsCount = notionAuditLogs.filter(l => l.actionExecuted && l.actionExecuted.includes('📅 Orientation scheduled')).length;
-  const emailsSentCount = notionAuditLogs.filter(l => l.actionExecuted && l.actionExecuted.includes('📧 Welcome email delivered')).length;
+  const calendarEventsCount = notionAuditLogs.filter(l => l.actionExecuted && l.actionExecuted.includes('Orientation scheduled')).length;
+  const emailsSentCount = notionAuditLogs.filter(l => l.actionExecuted && l.actionExecuted.includes('Welcome email delivered')).length;
 
+
+  const renderModal = () => {
+    if (!activeModal) return null;
+
+    let content = null;
+    let title = '';
+    let Icon = Database;
+
+    if (activeModal === 'calendar') {
+      title = 'Calendar Events';
+      Icon = Calendar;
+      content = (
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {notionOnboardingRecords.map(r => (
+            <div key={r.id || r.employeeName} style={{ padding: '16px', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.employeeName}</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                {r.calendarEventUrl ? (
+                  <a href={r.calendarEventUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#4285F4', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Calendar size={14} /> View Event
+                  </a>
+                ) : 'No calendar event scheduled.'}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    } else if (activeModal === 'mails') {
+      title = 'Emails';
+      Icon = Mail;
+      content = (
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {notionOnboardingRecords.map(r => (
+            <div key={r.id || r.employeeName} style={{ padding: '16px', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.employeeName}</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Mail size={14} /> {r.email || (r.emailSent ? <span style={{ color: '#2ecc71' }}>Welcome Email Delivered</span> : 'Waiting...')}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    } else if (activeModal === 'employeeList') {
+      title = 'Employee List';
+      Icon = UserRound;
+      content = (
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {notionOnboardingRecords.map(r => (
+            <div key={r.id || r.employeeName} style={{ padding: '16px', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{r.employeeName}</div>
+              <div style={{ color: 'var(--text-secondary)' }}>{r.role}</div>
+            </div>
+          ))}
+        </div>
+      );
+    } else if (activeModal === 'employeeData') {
+      title = 'Employee Data';
+      Icon = NotepadText;
+      content = (
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {notionOnboardingRecords.map(r => (
+            <div key={r.id || r.employeeName} style={{ padding: '16px', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>{r.employeeName}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                <div><strong>Role:</strong> {r.role}</div>
+                <div><strong>Dept:</strong> {r.department}</div>
+                <div><strong>Salary:</strong> ${r.salary.toLocaleString()}</div>
+                <div><strong>GitHub:</strong> {r.githubUsername || 'N/A'}</div>
+                <div style={{ gridColumn: '1 / -1' }}><strong>Equipment:</strong> {r.equipmentList}</div>
+                <div style={{ gridColumn: '1 / -1' }}><strong>Status:</strong> {r.onboardingStatus}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+        <div className="modal-container" onClick={e => e.stopPropagation()}>
+          <div className="modal-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <Icon size={20} /> {title}
+            </div>
+            <button className="modal-close" onClick={() => setActiveModal(null)}><X size={20} /></button>
+          </div>
+          <div className="modal-content">
+            {notionOnboardingRecords.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-text">No records available.</div>
+              </div>
+            ) : content}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="app-container">
@@ -387,8 +487,9 @@ export default function App() {
           zIndex: 9999, display: 'flex', flexDirection: 'column',
           justifyContent: 'center', alignItems: 'center', color: 'white'
         }}>
-          <div className="spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--brand-primary)', marginBottom: '20px' }} />
-          <div style={{ fontSize: '18px', fontWeight: 500 }}>Fetching data...</div>
+          <div className="spinner" style={{ width: '40px', height: '40px', borderTopColor: 'var(--text-primary)', marginBottom: '20px' }} />
+          <div style={{ fontSize: '18px', fontWeight: 500, marginBottom: '8px' }}>Fetching data...</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Estimated time ~ 15-20s</div>
         </div>
       )}
       {/* ── Navbar ── */}
@@ -417,7 +518,27 @@ export default function App() {
         </div>
       </nav>
 
-      <div className="main-container">
+    <div className="app-body">
+        <aside className="sidebar">
+          <div className="sidebar-section-title">Navigation</div>
+          <button className="sidebar-item" onClick={() => memorySectionRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+            <Database size={16} /> Notion Records
+          </button>
+          <button className="sidebar-item" onClick={() => setActiveModal('calendar')}>
+            <Calendar size={16} /> Calendar
+          </button>
+          <button className="sidebar-item" onClick={() => setActiveModal('mails')}>
+            <Mail size={16} /> Mails
+          </button>
+          <button className="sidebar-item" onClick={() => setActiveModal('employeeList')}>
+            <UserRound size={16} /> Employee List
+          </button>
+          <button className="sidebar-item" onClick={() => setActiveModal('employeeData')}>
+            <NotepadText size={16} /> Employee Data
+          </button>
+        </aside>
+
+        <div className="main-container">
 
         {/* ── Stats Row ── */}
         <div className="stats-row">
@@ -555,13 +676,13 @@ export default function App() {
               <div className="agent-card-status">{agent.status}</div>
               <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {agent.tasks.map((task, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', color: task.done ? 'var(--text-secondary)' : 'var(--text-primary)', transition: 'color 0.2s ease' }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', color: task.done ? 'var(--text-secondary)' : 'white', transition: 'color 0.2s ease' }}>
                     <div style={{ 
                       marginTop: '2px',
                       width: '12px', height: '12px', 
                       borderRadius: '3px', 
-                      border: task.done ? `1px solid var(--brand-${agent.tone})` : '1px solid var(--border)',
-                      backgroundColor: task.done ? `var(--brand-${agent.tone})` : 'transparent',
+                      border: task.done ? '1px solid rgba(52,211,153,0.4)' : '1px solid white',
+                      backgroundColor: task.done ? 'var(--green-subtle)' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
                       {task.done && <Check size={8} color="white" strokeWidth={4} />}
@@ -578,9 +699,9 @@ export default function App() {
         <div className="main-layout">
 
           {/* ── LEFT: Form + Approvals ── */}
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Company Config */}
-            <div className="card" style={{ marginBottom: '1.25rem' }}>
+            <div className="card">
               <div className="card-header">
                 <IconBox Icon={CircleDollarSign} tone="green" />
                 <div>
@@ -604,7 +725,7 @@ export default function App() {
             </div>
 
             {/* Onboarding Form */}
-            <div className="card" style={{ marginBottom: '1.25rem' }}>
+            <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <div className="card-header">
                 <IconBox Icon={Plus} tone="purple" />
                 <div>
@@ -649,7 +770,7 @@ export default function App() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Employee Email</label>
-                  <input className="form-input" placeholder="sparsh@gmail.com" value={formData.email}
+                  <input className="form-input" placeholder="shashwat@gmail.com" value={formData.email}
                     onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} />
                 </div>
                 <div className="form-group">
@@ -667,7 +788,7 @@ export default function App() {
                               onChange={() => toggleEquipment(item)}
                               style={{ 
                                 appearance: 'none', position: 'absolute', inset: 0, margin: 0, width: '100%', height: '100%',
-                                border: '1px solid var(--border)', borderRadius: '3px', 
+                                border: '1px solid #ffffff', borderRadius: '3px', 
                                 backgroundColor: 'transparent', cursor: 'pointer', zIndex: 1
                               }}
                             />
@@ -737,7 +858,7 @@ export default function App() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* ── RIGHT: Agent Workspace ── */}
-            <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div className="card-header" style={{ justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <IconBox Icon={MessageSquareText} tone="blue" />
@@ -757,10 +878,10 @@ export default function App() {
                       <div className="chat-meta">
                         <span className={`agent-badge ${log.agent}`}>
                           {log.agent === 'Engineering'
-                            ? (/github|username|invitation|issue/i.test(log.text) ? '🐙 ' : /calendar|📅|orientation/i.test(log.text) ? '📅 ' : /email|📧|gmail/i.test(log.text) ? '📧 ' : /notion/i.test(log.text) ? '🟣 ' : '🤖 ')
-                            : log.agent === 'PM' ? '🤖 '
-                            : log.agent === 'Finance' ? '💰 '
-                            : log.agent === 'System' ? '⚙️ '
+                            ? (/github|username|invitation|issue/i.test(log.text) ? <GitBranch size={14} style={{ marginRight: '4px' }} /> : /calendar|orientation/i.test(log.text) ? <Calendar size={14} style={{ marginRight: '4px' }} /> : /email|gmail/i.test(log.text) ? <Mail size={14} style={{ marginRight: '4px' }} /> : /notion/i.test(log.text) ? <NotepadText size={14} style={{ marginRight: '4px' }} /> : <Bot size={14} style={{ marginRight: '4px' }} />)
+                            : log.agent === 'PM' ? <Bot size={14} style={{ marginRight: '4px' }} />
+                            : log.agent === 'Finance' ? <CircleDollarSign size={14} style={{ marginRight: '4px' }} />
+                            : log.agent === 'System' ? <Bot size={14} style={{ marginRight: '4px' }} />
                             : ''}
                           {log.agent === 'PM' ? 'Product Manager' : log.agent}
                         </span>
@@ -779,7 +900,7 @@ export default function App() {
                 {/* Approval Pending Warning */}
                 {(sessionState === 'PENDING_FINANCE_APPROVAL' || sessionState === 'PENDING_ENG_APPROVAL') && (
                   <div style={{ padding: '12px', marginTop: '10px', backgroundColor: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30', borderRadius: '8px', border: '1px solid rgba(255, 59, 48, 0.2)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, fontSize: '13px' }}>
-                    <ShieldCheck size={16} /> Approval Pending — Please review the request on the left.
+                    <ShieldCheck size={16} /> Approval Pending — Please review the request below.
                   </div>
                 )}
   
@@ -902,8 +1023,28 @@ export default function App() {
         </div>
 
         {/* ── Notion Memory Explorer ── */}
-        <div className="memory-section">
-          <div className="section-label"><Database size={13} /> Notion Company Memory — approvals, audit, decisions, history</div>
+        <div className="memory-section" ref={memorySectionRef}>
+          <div className="section-label" style={{ justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Database size={13} /> Notion Company Memory — approvals, audit, decisions, history
+            </div>
+            <a 
+              href="https://app.notion.com/p/OrgOS-AI-Enterprise-Operating-System-39979cc215378182afdfd2833e81abc9?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ 
+                color: 'var(--text-secondary)', 
+                textDecoration: 'none', 
+                textTransform: 'none', 
+                letterSpacing: 'normal',
+                fontWeight: 500
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+            >
+              Visit Notion Page ↗
+            </a>
+          </div>
           <div className="memory-grid">
             {/* Decisions DB */}
             <div className="memory-panel">
@@ -989,11 +1130,11 @@ export default function App() {
                       </div>
                       {/* NEW: Calendar and Email Data from Backend */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', borderTop: '1px solid var(--border-light)', paddingTop: '4px', marginTop: '2px' }}>
-                        <span>
-                          📅 Calendar: {r.calendarEventUrl ? <a href={r.calendarEventUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-primary)', textDecoration: 'none' }}>View Event</a> : 'Waiting...'}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar size={14} /> Calendar: {r.calendarEventUrl ? <a href={r.calendarEventUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>View Event</a> : 'Waiting...'}
                         </span>
-                        <span>
-                          📧 Email: {r.emailSent ? <span style={{ color: '#2ecc71' }}>Delivered</span> : 'Waiting...'}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Mail size={14} /> Email: {r.email || (r.emailSent ? <span style={{ color: '#2ecc71' }}>Delivered</span> : 'Waiting...')}
                         </span>
                       </div>
                     </div>
@@ -1003,20 +1144,9 @@ export default function App() {
             </div>
           </div>
 
-          {/* Notion Link */}
-          <div className="notion-link-bar">
-            <Database size={15} />
-            <span>Decisions, logs, and onboarding records sync to</span>
-            <a href="https://app.notion.com/p/OrgOS-AI-Enterprise-Operating-System-39979cc215378182afdfd2833e81abc9?source=copy_link" target="_blank" rel="noopener noreferrer">
-              OrgOS Notion Workspace
-            </a>
-            <span>·</span>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
-              {/* @ts-ignore */}
-              {import.meta.env.MODE === 'development' ? 'LIVE' : 'REAL'} API
-            </span>
-          </div>
+
         </div>
+      </div>
       </div>
 
       {/* ── Toast Container ── */}
@@ -1073,6 +1203,8 @@ export default function App() {
           </div>
         </div>
       )}
+      
+      {renderModal()}
     </div>
   );
 }

@@ -49,6 +49,8 @@ function printSchemaDocumentation() {
      - Salary (Number)
      - Equipment List (Rich Text)
      - GitHub Username (Rich Text)
+     - Email (Email)
+     - Calendar Event (URL)
      - Onboarding Status (Select: In Progress, Complete, Failed)
 ========================================================================
 `);
@@ -130,6 +132,8 @@ async function run() {
           "Salary": { type: "number" },
           "Equipment List": { type: "rich_text" },
           "GitHub Username": { type: "rich_text" },
+          "Email": { type: "email" },
+          "Calendar Event": { type: "url" },
           "Onboarding Status": { type: "select", options: ["In Progress", "Complete", "Failed"] }
         },
         records: []
@@ -238,6 +242,8 @@ async function run() {
         "Salary": { number: { format: "number" } },
         "Equipment List": { rich_text: {} },
         "GitHub Username": { rich_text: {} },
+        "Email": { email: {} },
+        "Calendar Event": { url: {} },
         "Onboarding Status": {
           select: {
             options: [
